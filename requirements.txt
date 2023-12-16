@@ -1,0 +1,26 @@
+tensorflow
+networkx
+igraph
+pandas
+numpy
+scikit-learn
+seaborn
+pyvis
+plotly
+kaleido
+tqdm
+ipykernel
+nbformat
+pmlb
+torch
+igraph
+pydot
+pgmpy
+python-javabridge
+pyparsing
+causal-learn
+gcastle 
+cdt
+git+git://github.com/xunzheng/notears
+### the below has to be run in the terminal
+# pip install git+git://github.com/bd2kccd/py-causal --no-deps --no-dependencies

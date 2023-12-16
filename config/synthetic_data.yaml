@@ -1,0 +1,30 @@
+wandb: false                               
+wdb_proj_name: shap_pc_testing
+dump_args: true
+overwrite_args: false
+dump_results: true
+overwrite_res: false
+dump_data: true
+overwrite_data: false
+debug: false
+start_iter: 0
+output_dir: runs/  
+expt_name: ER124_d102050_allsem   
+run_name: default                            
+data_dir: generated_data/    
+device: ''                  
+compute_extra_metrics: false
+main_seed: 2023
+graph_type: 'ER'
+num_data_per_graph: 10
+n_nodes: [10,20,50]
+edge_per_node: [1,2,4]
+s: [10, 50, 100, 500]
+w_ranges: ((-2.0, -0.5), (0.5, 2.0))
+noise_scale_vec: False
+method: ['spc', 'nt', 'cam', 'mcsl', 'pc_max', 'fgs']
+sem_type: ['gauss', 'exp', 'gumbel', 'uniform', 'mlp', 'mim', 'gp', 'gp-add']
+test_alpha: [0.01]
+test_name: ["kci"]
+selection: ['bot']
+priority: 2
