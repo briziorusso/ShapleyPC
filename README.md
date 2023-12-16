@@ -15,8 +15,6 @@ A jupyter notebook collecting the stored results and producing the plots in the 
 To run the Shapley-PC algorithm from python at the root folder, run:
 ```
 # Imports
-import networkx as nx
-from sklearn.preprocessing import StandardScaler
 from PC import pc
 from utils import random_stability, load_bnlearn_data_dag
 from castle.metrics import MetricsDAG
