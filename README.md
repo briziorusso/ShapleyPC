@@ -5,11 +5,11 @@ There are four main python scripts:
 - `PC.py` contains the `pc()` function that overrides the one from the causal-learn package to allow for our proposed decision rule. Example usage of this function is given below.
 - `spc.py ` contains the `shapley_cs()` functions that applies our proposed v-structure discovery algorithm within the `pc()` function.
 - `models.py` contains the `run_method()` function that allows the run of our method as well as all the baselines used in the experiments.
-- `main.py` reproduces the experiments. The parameters for the runs are loaded from the config folder (e.g. [real_data](config/real_data.yaml)). Example usage of this script is given below.
+- `main.py` reproduces the experiments. The parameters for the runs are loaded from the config folder (e.g. [bnlearn_data](config/bnlearn_data.yaml)). Example usage of this script is given below.
 
 All the plots included in the paper can be inspected interactively from the [results/figs](results/figs) folder. Just download them and open them in a browser. 
 
-A jupyter notebook collecting the stored results and producing the plots in the paper is provided [here](notebooks/Experiments.ipynb).
+A jupyter notebook collecting the stored results and producing the tables and plots in the paper is provided [here](notebooks/Experiments.ipynb).
 
 ### Example usage
 To run the Shapley-PC algorithm from python at the root folder, run:
@@ -45,7 +45,7 @@ python main.py <synthetic_data,real_data,bespoke_config>
 Beware, an end-to-end run of this script with the config provided takes several hours if run on single cpu since it contains all the scenarios. Modify it to run only part of it in one go.
 
 ### Datasets
-The datasets used for the synthetic data are created within the `main.py` function. Some of the `bnlearn` datasets are provided in `.rds` since no `.bif` are available in the `bnlearn` repository for the gaussian and conditional linear gaussian Bayesian Networks. The data was generated in a R environment, for 10 seeds, using the script provided [here](datasets/bayesian/sample.R). `.pkl` files that are then picked up by the `main.py` function to reproduce the experiments are provided for these data, these were produced using [this](datasets/bayesian/import_r.py) script.
+The datasets used for the synthetic data are created within the `main.py` function. Some of the `bnlearn` datasets are provided in `.rds` since no `.bif` are available in the `bnlearn` repository for the gaussian and conditional linear gaussian Bayesian Networks. The data was generated in a R environment, for 10 seeds, using the script provided [here](datasets/bayesian/sample.R). `.pkl` files that are picked up by the `main.py` function to reproduce the experiments are provided for these data, these were produced using [this](datasets/bayesian/import_r.py) script.
 
 ### Requirements
 The code was tested with Python 3.10.12. `requirements.txt` provides the necessary python packages. Run `pip install -r requirements.txt` from a terminal at the root folder to install all packages in your virtual environment. 
