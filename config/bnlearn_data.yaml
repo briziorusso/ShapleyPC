@@ -1,0 +1,30 @@
+wandb: false
+wdb_proj_name: shap_pc_testing
+dump_args: true
+overwrite_args: false
+dump_results: true
+overwrite_res: false
+dump_data: true
+overwrite_data: false
+debug: false
+start_iter: 0
+output_dir: runs/ 
+expt_name: bnlearn_gbn # bnlearn_discrete
+run_name: all_pc_gbn_50k # all_pc_discrete_10k
+data_dir: ../datasets/bnlearn_gbn/
+time_limit: 0
+device: ''
+compute_extra_metrics: false
+main_seed: 2023
+num_data_per_graph: 10
+standardise: true
+graph_type: 'real'
+method: ['spc', 'pc', 'pc_max', 'pc_maj', 'pc_con']
+sem_type: ['arth150','ecoli70','mehra-complete','sangiovese', 'magic-niab','magic-irri']
+#['alarm', 'child', 'insurance', 'hepar2']
+s: [10000] ### number of samples (N) for real, samples per node for synthetic
+test_alpha: [0.01]
+test_name: ["fisherz"]
+priority: 3
+selection: ['neg']
+extra_tests: false
