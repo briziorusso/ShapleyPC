@@ -34,18 +34,6 @@ def powerset(iterable):
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
-
-    # manager = Manager()
-    # return_dict = manager.dict()
-    # jobs = []
-    # for i in range(0, len(sv_params)):
-    #     p = Process(target=calculate_sv, args=sv_params[i])
-    #     jobs.append(p)
-    #     p.start()
-    # for proc in jobs:
-    #     proc.join()
-    # results = return_dict.values()
-
 ## Define function to calculate shapley values
 def calculate_sv(i, t_key, t_val, s_key, s_val, w_i):
     # i, t_key, t_val, s_key, s_val, w_i = args
@@ -74,49 +62,6 @@ def shapley(x: int, y: int, num_of_nodes: int, sepset: np.ndarray, prec_lev: int
     n_factorial = math.factorial(max_set_size)
     w_i_len = {l: math.factorial(l) * math.factorial(max_set_size - l - 1) / n_factorial for l in range(0, max_set_size)}
 
-    # start = time.time()
-    # # sv_list = []
-    # sv_is = []
-    # subtime = time.time()
-    # sv_params = []
-    # for i in sets_S - {x, y}:
-    #     ## select p-values
-    #     s_p_i = [t for t in s_p if i in t[0]]
-    #     without_i = [t for t in s_p if i not in t[0]]
-    #     ## calculate shapley value
-    #     for t_key, t_val in s_p_i:
-    #         for s_key, s_val in without_i:
-    #             if len(s_key) == len(t_key) - 1:
-    #                 sv_params.append((i, t_key, t_val, s_key, s_val, w_i_len[len(s_key)]))
-    # # sv_params = [(i, t_key, t_val, s_key, s_val, w_i_len[len(s_key)]) for i in sets_S for t_key, t_val in [t for t in s_p if i in t[0]] for s_key, s_val in [sp for sp in [t for t in s_p if i not in t[0]] if len(sp[0]) == len(t_key)-1]]    
-    # print(f"sv_params: {time.time()-subtime}")
-    # subtime = time.time()
-    # mask = [set(a)-set(b)=={i} for i,a,_,b,_,_ in sv_params]
-    # print(f"mask: {time.time()-subtime}")
-    # subtime = time.time()
-    # sv_params = list(compress(sv_params, mask))
-    # print(f"compress: {time.time()-subtime}")
-    # subtime = time.time()
-    # for i, t_key, t_val, s_key, s_val, w_i in sv_params:
-    #     v_i = t_val - s_val ## marginal contribution of i 
-    #     w_i = w_i_len[len(s_key)]
-    #     sv_i = v_i * w_i
-    #     sv_is.append((i,sv_i))
-    # print(f"sv_is: {time.time()-subtime}")
-    # subtime = time.time()
-    # sv_list = group_tups(sv_is)
-    # print(f"group_tups: {time.time()-subtime}")
-
-    # with Pool() as pool:
-    #     results = pool.starmap(calculate_sv, sv_params)
-    # pool.close()
-    # pool.join()
-             # results = map(calculate_sv, sv_params)
-    # sv_is = [x for x in results if x is not None]
-    ## sum up the shapley values for each player i
-    # sv_list = group_tups(sv_is)
-    # m1 = time.time()-start
-
     start = time.time()
     sv_list2 = []
     for i in sets_S - {x, y}:
@@ -126,14 +71,6 @@ def shapley(x: int, y: int, num_of_nodes: int, sepset: np.ndarray, prec_lev: int
         without_i = [t for t in s_p if i not in t[0]]
 
         len_cs = max_set_size
-        # while len_cs >= 1:
-        #     for t in [sp for sp in s_p_i if len(sp[0]) == len_cs]:
-        #         # s = [wi for wi in without_i if set(wi[0])==set(t[0])-{i}]     
-        #         for s in [wi for wi in without_i if len(wi[0]) == len_cs-1]:
-        #             if set(t[0]) - set(s[0]) == {i}:
-        #                 avg_sv_i += (t[1] - s[1]) * w_i_len[len(s[0])]
-        #     len_cs -= 1
-
         while len_cs >= 1:
             t_filtered = [sp for sp in s_p_i if len(sp[0]) == len_cs]
             s_filtered = [wi for wi in without_i if len(wi[0]) == len_cs - 1]
@@ -145,316 +82,8 @@ def shapley(x: int, y: int, num_of_nodes: int, sepset: np.ndarray, prec_lev: int
 
             len_cs -= 1
             
-        # avg_sv_i = round(sum(sv_is), prec_lev)
-        # if verbose:
-            # logging.debug("SV of {} = {}".format(i, avg_sv_i))
         sv_list2.append((i, avg_sv_i))
-
-    # m2 = time.time()-start
-    # print(f"M2 is quicker than M1: {m2 < m1}: {m2} vs {m1}")
-
-    # print(sv_list == sv_list2)
-
     return sv_list2
-
-
-## Define function to calculate shapley values
-def shapley_loop(x:int, y:int, num_of_nodes:int, sepset:np.ndarray, prec_lev:int=10, rebase:bool=False, verbose:bool=False) -> list:
-    """
-    Calculate the Shapley value for all subsets of conditioning sets for the pair of variables x and y
-    
-    Parameters
-    ----------
-        x: variable x
-        y: variable y
-        num_of_nodes: number of nodes in the graph
-        sepset: matrix of conditioning sets and p-values
-        prec_lev: precision level
-        verbose: print intermediate results
-
-    Returns
-    -------
-        sv_list: list of tuples (i, sv_i) where i is the variable and sv_i is the Shapley value of i
-    """
-
-    ## Extract conditioning sets and p-values from the skeleton
-    s_p = [i for i in list(set(sepset[x,y])) if len(i) > 0 and type(i[0]) == tuple]
-    sets_S = set().union(*[i[0] for i in s_p])
-    max_set_size = max([len(i[0]) for i in s_p])
-    n_factorial = math.factorial(max_set_size)
-
-    w_i_len = {l: math.factorial(l) * math.factorial(max_set_size - l - 1) / n_factorial for l in range(0, max_set_size)}
-
-    sv_list = []
-    for i in sets_S - {x, y}:
-        sv_is = []
-        ## select p-values
-        s_p_i = [t for t in s_p if i in t[0]]
-        # if len(s_p_i) == 0:
-        #     ## No conditioning sets contain i
-        #     sv_list.append((i, np.nan))
-        #     continue
-        without_i = [t for t in s_p if i not in t[0]]
-
-        if rebase:
-            ## Rebase the p-values around the p-value of the marginal test
-            eps = 1e-10
-            p_marginal = [t[1] for t in s_p if len(t[0]) == 0][0]
-            s_p_i = [(t[0], t[1] / ((p_marginal+eps) if p_marginal==0 else p_marginal)) for t in s_p_i]
-            without_i = [(t[0], t[1] / ((p_marginal+eps) if p_marginal==0 else p_marginal)) for t in without_i]
-
-        # start = time.time()
-        len_cs = max_set_size
-        while len_cs >= 1:
-            for t in [sp for sp in s_p_i if len(sp[0]) == len_cs]:
-                # s = [wi for wi in without_i if set(wi[0])==set(t[0])-{i}]     
-                for s in [s for s in without_i if len(s[0]) == len_cs-1]:
-                    if set(s[0]).issubset(set(t[0])) and set(t[0]) - set(s[0]) == {i}:
-                # if len(s) > 0:
-                    # s = s[0]
-                        v_i = t[1] - s[1] ## marginal contribution of i 
-                        w_i = w_i_len[len(s[0])]
-                        sv_i = v_i * w_i
-                        sv_is.append(sv_i)
-            len_cs -= 1
-        # m2 = time.time()-start
-
-        # ## calculate shapley value
-        # start = time.time()
-        # for t in s_p_i:
-        #     for s in without_i:
-        #         if set(s[0]).issubset(set(t[0])) and set(t[0]) - set(s[0]) == {i}: # if s is the only difference between t and t-{i}
-        #             v_i = t[1] - s[1] ## marginal contribution of i 
-        #             w_i = w_i_len[len(s[0])]
-        #             sv_i = v_i * w_i
-        #             sv_is.append(sv_i)
-        #             if verbose:
-        #                 logging.debug((t[0],s[0]), sv_i)
-        # m1 = time.time()-start
-
-        # print(f"M2 is quicker than M1: {m2 < m1}: {m2} vs {m1}")
-            
-        avg_sv_i = round(sum(sv_is), prec_lev)
-        # if verbose:
-            # logging.debug("SV of {} = {}".format(i, avg_sv_i))
-        sv_list.append((i, avg_sv_i))
-
-    return sv_list
-
-
-## Define function to calculate shapley values
-def shapley_ori(x:int, y:int, num_of_nodes:int, sepset:np.ndarray, prec_lev:int=10, rebase:bool=False, verbose:bool=False) -> list:
-    """
-    Calculate the Shapley value for all subsets of conditioning sets for the pair of variables x and y
-    
-    Parameters
-    ----------
-        x: variable x
-        y: variable y
-        num_of_nodes: number of nodes in the graph
-        sepset: matrix of conditioning sets and p-values
-        prec_lev: precision level
-        verbose: print intermediate results
-
-    Returns
-    -------
-        sv_list: list of tuples (i, sv_i) where i is the variable and sv_i is the Shapley value of i
-    """
-
-    ## Extract conditioning sets and p-values from the skeleton
-    s_p = [i for i in list(set(sepset[x,y])) if len(i) > 0 and type(i[0]) == tuple]
-    sets_S = set().union(*[i[0] for i in s_p])
-    max_set_size = max([len(i[0]) for i in s_p])
-    n_factorial = math.factorial(max_set_size)
-
-    w_i_len = {l: math.factorial(l) * math.factorial(max_set_size - l - 1) / n_factorial for l in range(0, max_set_size)}
-
-    sv_list = []
-    for i in sets_S - {x, y}:
-        sv_is = []
-        ## select p-values
-        s_p_i = [t for t in s_p if i in t[0]]
-        # if len(s_p_i) == 0:
-        #     ## No conditioning sets contain i
-        #     sv_list.append((i, np.nan))
-        #     continue
-        without_i = [t for t in s_p if i not in t[0]]
-
-        if rebase:
-            ## Rebase the p-values around the p-value of the marginal test
-            eps = 1e-10
-            p_marginal = [t[1] for t in s_p if len(t[0]) == 0][0]
-            s_p_i = [(t[0], t[1] / ((p_marginal+eps) if p_marginal==0 else p_marginal)) for t in s_p_i]
-            without_i = [(t[0], t[1] / ((p_marginal+eps) if p_marginal==0 else p_marginal)) for t in without_i]
-
-        start = time.time()
-        len_cs = max_set_size
-        while len_cs >= 1:
-            for t in [sp for sp in s_p_i if len(sp[0]) == len_cs]:
-                s = [wi for wi in without_i if set(wi[0])==set(t[0])-{i}]     
-                # for s in [s for s in without_i if len(s[0]) == len_cs-1]:
-                #     if set(s[0]).issubset(set(t[0])) and set(t[0]) - set(s[0]) == {i}:
-                if len(s) > 0:
-                    s = s[0]
-                    v_i = t[1] - s[1] ## marginal contribution of i 
-                    w_i = w_i_len[len(s[0])]
-                    sv_i = v_i * w_i
-                    sv_is.append(sv_i)
-            len_cs -= 1
-        m2 = time.time()-start
-
-        ## calculate shapley value
-        start = time.time()
-        for t in s_p_i:
-            for s in without_i:
-                if set(s[0]).issubset(set(t[0])) and set(t[0]) - set(s[0]) == {i}: # if s is the only difference between t and t-{i}
-                    v_i = t[1] - s[1] ## marginal contribution of i 
-                    w_i = w_i_len[len(s[0])]
-                    sv_i = v_i * w_i
-                    sv_is.append(sv_i)
-                    if verbose:
-                        logging.debug((t[0],s[0]), sv_i)
-        m1 = time.time()-start
-
-        print(f"M2 is quicker than M1: {m2 < m1}: {m2} vs {m1}")
-            
-        avg_sv_i = round(sum(sv_is), prec_lev)
-        # if verbose:
-            # logging.debug("SV of {} = {}".format(i, avg_sv_i))
-        sv_list.append((i, avg_sv_i))
-
-    return sv_list
-
-
-def check_UTs(cg, UT_gamma=0.0015, DAG_check=True, verbose=False):
-
-    cg_new = deepcopy(cg)
-
-    UT = [(i, j, k) for (i, j, k) in cg_new.find_unshielded_triples() if i < k]  # Not considering symmetric triples
-    edge_to_remove = {}
-    edges_to_add = {}
-    # edge_removal = defaultdict(list)
-    # confounding_edges = defaultdict(list)
-    # confounders = defaultdict(list)
-    for (x, y, z) in UT:
-        ## find neighbors of x and y that could be confounders
-        neigh_y = set(cg_new.neighbors(y))
-        neigh_x = set(cg_new.neighbors(x))
-        ## second degree neighbors of x and y
-        neigh_x_2 = set()
-        neigh_y_2 = set()
-        # for i in neigh_x:
-        #     neigh_x_2 = neigh_x_2.union(cg_new.neighbors(i))
-        # for i in neigh_y:
-        #     neigh_y_2 = neigh_y_2.union(cg_new.neighbors(i))
-        neigh_x_y = neigh_x.union(neigh_y).union(neigh_x_2).union(neigh_y_2) - {x, y, z}
-        if len(neigh_x_y) > 0:
-            cond_b_x_y = powerset(neigh_x_y)
-            cond_b_x_y_p = [(S,cg_new.ci_test(x, y, S)) for S in cond_b_x_y]
-            [append_value(cg_new.sepset, x, y, (S,p)) for S,p in cond_b_x_y_p]
-            if verbose:
-                logging.debug(f"cond_b_{x}_{y}: {cond_b_x_y_p}")
-        
-        ## find neighbors of z and y that could be confounders
-        neigh_z = set(cg_new.neighbors(z))
-        ## second degree neighbors of z and y
-        neigh_z_2 = set()
-        # for i in neigh_z:
-        #     neigh_z_2 = neigh_z_2.union(cg_new.neighbors(i))
-        neigh_z_y = neigh_z.union(neigh_y).union(neigh_z_2).union(neigh_y_2) - {z, y, x}
-        if len(neigh_z_y) > 0:
-            cond_b_z_y = powerset(neigh_z_y)
-            cond_b_z_y_p = [(S,cg_new.ci_test(z, y, S)) for S in cond_b_z_y]
-            [append_value(cg_new.sepset, z, y, (S,p)) for S,p in cond_b_z_y_p]
-            if verbose:
-                logging.debug(f"cond_b_{z}_{y}: {cond_b_z_y_p}")
-                
-        ## Calculate the shapley value of the neighbors of x and z
-        sv_list_x = shapley(x, y, len(cg_new.G.nodes), cg_new.sepset, verbose=verbose)
-        sv_list_z = shapley(z, y, len(cg_new.G.nodes), cg_new.sepset, verbose=verbose)
-        ## remove nan values (no conditioning sets contain i)
-        sv_list_x = [sv for sv in sv_list_x if not np.isnan(sv[1]) and sv[0] not in [x, y, z]]
-        sv_list_z = [sv for sv in sv_list_z if not np.isnan(sv[1]) and sv[0] not in [x, y, z]]
-        ## identify possible confounders for the UT by maximizing shapley value
-        confounder_x_y, confounders_z_y = 0, 0
-        if len([sv[1] for sv in sv_list_x if sv[1] > 0]) != 0:
-            confounder_x_y = max([sv[1] for sv in sv_list_x if sv[1] > 0])
-        if len([sv[1] for sv in sv_list_z if sv[1] > 0]) != 0:
-            confounders_z_y = max([sv[1] for sv in sv_list_z if sv[1] > 0])
-        if verbose:
-            logging.debug(f"max confounder_x_y: {[sv for sv in sv_list_x if sv[1] == confounder_x_y]}")
-            logging.debug(f"max confounder_z_y: {[sv for sv in sv_list_z if sv[1] == confounders_z_y]}")
-        
-        ## Found counfounder, removing edge and reconsidering the UT
-        if confounder_x_y > UT_gamma:
-            confounder = [sv for sv in sv_list_x if sv[1] == confounder_x_y][0][0]
-            logging.debug(f"Found confounder for {x} -- {y}: {confounder}")
-            # edge_removal[(x,y,z)].append((x, y))
-            # confounding_edges[(x,y,z)].append((confounder, x))
-            # confounding_edges[(x,y,z)].append((confounder, y))
-            # # confounders[(x,y,z)].append(((x,y), confounder, confounder_SIV))
-            # confounders[(f"X{x+1}",f"X{y+1}",f"X{z+1}")].append([(f"X{x+1}",f"X{y+1}"), f"X{confounder+1}", confounder_x_y, [(f"X{confounder+1}",f"X{x+1}"), (f"X{confounder+1}",f"X{y+1}")]])
-            edge = (x,y) if x < y else (y,x)
-            edge_to_remove[edge] = confounder_x_y
-            edges_to_add[edge] = [(confounder, x), (confounder, y)]
-            # if verbose:
-            #     logging.debug(f"Oriented: {confounder} --> {x} ({cg_new.G.nodes[confounder].get_name()} --> {cg_new.G.nodes[x].get_name()})")
-            #     logging.debug(f"Oriented: {confounder} --> {y} ({cg_new.G.nodes[confounder].get_name()} --> {cg_new.G.nodes[y].get_name()})")
-        if confounders_z_y > UT_gamma:
-            confounder = [sv for sv in sv_list_z if sv[1] == confounders_z_y][0][0]
-            logging.debug(f"Found confounder for {z} -- {y}: {confounder}")
-            # edge_removal[(x,y,z)].append((z, y))
-            # confounding_edges[(x,y,z)].append((confounder, z))
-            # confounding_edges[(x,y,z)].append((confounder, y))
-            # # confounders[(x,y,z)].append(((z,y), confounder, confounder_SIV))
-            # confounders[(f"X{x+1}",f"X{y+1}",f"X{z+1}")].append([(f"X{z+1}",f"X{y+1}"), f"X{confounder+1}", confounders_z_y, [(f"X{confounder+1}",f"X{z+1}"), (f"X{confounder+1}",f"X{y+1}")]])
-            edge = (z,y) if z < y else (y,z)
-            edge_to_remove[edge] = confounders_z_y
-            edges_to_add[edge] = [(confounder, z), (confounder, y)]
-            # if verbose:
-            #     logging.debug(f"Oriented: {confounder} --> {z} ({cg_new.G.nodes[confounder].get_name()} --> {cg_new.G.nodes[z].get_name()})")
-            #     logging.debug(f"Oriented: {confounder} --> {y} ({cg_new.G.nodes[confounder].get_name()} --> {cg_new.G.nodes[y].get_name()})")
-
-        ## TODO: think about SIV=0
-    ## aggregate edges independently of direction
-    for k,v in edge_to_remove.items():
-        edge_to_remove[k] += v
-
-    ## sort the edges to remove by the shapley value
-    edge_to_remove = sort_dict_ascending(edge_to_remove, True)
-
-    edge_removed = []
-    for (x, y) in edge_to_remove.keys():
-        if (x, y) not in edge_removed: ## TODO: think about added edges
-            edge1 = cg_new.G.get_edge(cg_new.G.nodes[x], cg_new.G.nodes[y])
-            if edge1 is not None:
-                cg_new.G.remove_edge(edge1)
-                edge_removed.append((x, y))
-                if verbose:
-                    logging.debug(f"Removed: {x} --- {y} ({cg_new.G.nodes[x].get_name()} --- {cg_new.G.nodes[y].get_name()})")
-                ## add confounding edges
-                for (i, j) in edges_to_add[(x, y)]:
-                    edge = cg_new.G.get_edge(cg_new.G.nodes[i], cg_new.G.nodes[j])
-                    if edge is not None:
-                        cg_new.G.remove_edge(edge)
-                    cg_new.G.add_edge(Edge(cg_new.G.nodes[i], cg_new.G.nodes[j], Endpoint.TAIL, Endpoint.ARROW)) ## TODO: check if not better to add as tail-tail
-                    if verbose:
-                        logging.debug(f"Oriented: {i} --> {j} ({cg_new.G.nodes[i].get_name()} --> {cg_new.G.nodes[j].get_name()})")
-                if not is_dag(cg_new.G.graph > 0) and DAG_check:
-                    ## Disorient the confounding edges
-                    for (i, j) in edges_to_add[(x, y)]: 
-                        cg_new.G.remove_edge(cg_new.G.get_edge(cg_new.G.nodes[j], cg_new.G.nodes[i]))
-                        cg_new.G.add_edge(Edge(cg_new.G.nodes[i], cg_new.G.nodes[j], Endpoint.TAIL, Endpoint.TAIL))
-                        if verbose:
-                            logging.debug(f'Disoriented because of DAG condition: {j} --- {i} ({cg_new.G.nodes[j].get_name()} --- {cg_new.G.nodes[i].get_name()})')      
-                    ## Reinstate the original edge
-                    cg_new.G.add_edge(Edge(cg_new.G.nodes[x], cg_new.G.nodes[y], Endpoint.TAIL, Endpoint.TAIL))
-                    if verbose:
-                        logging.debug(f'Reinstated: {x} --- {y} ({cg_new.G.nodes[x].get_name()} --- {cg_new.G.nodes[y].get_name()})')   
-
-    revised_UT = [(i, j, k) for (i, j, k) in cg_new.find_unshielded_triples() if i < k]  # Not considering symmetric triples
-
-    return cg_new, revised_UT
 
 def shapley_cs(cg: CausalGraph, priority: int = 2, background_knowledge: BackgroundKnowledge = None, 
                 selection: str = 'neg', extra_tests: bool = False, UT_check: bool = False, UT_gamma: float = 0.01, DAG_check: bool = True,
@@ -484,12 +113,7 @@ def shapley_cs(cg: CausalGraph, priority: int = 2, background_knowledge: Backgro
 
     cg_new = deepcopy(cg)
 
-    if UT_check:
-        cg_new, UT = check_UTs(cg_new, UT_gamma=UT_gamma, verbose=verbose)
-        logging.info(f"Number of undirected edges: {len(cg_new.find_undirected())}")
-        logging.info(f"Number of directed edges: {len(cg_new.find_fully_directed())}")
-    else:
-        UT = [(i, j, k) for (i, j, k) in cg_new.find_unshielded_triples() if i < k]  # Not considering symmetric triples
+    UT = [(i, j, k) for (i, j, k) in cg_new.find_unshielded_triples() if i < k]  # Not considering symmetric triples
 
     UC_dict = {}
     est_svs = []
@@ -593,10 +217,6 @@ def shapley_cs(cg: CausalGraph, priority: int = 2, background_knowledge: Backgro
 
         else:
             raise ValueError(f"Selection method {selection} not recognized")
-
-        # if (not cg_new.is_fully_directed(y, x)) and (not cg_new.is_fully_directed(y, z)): ## if not already oriented in the opposite direction
-        #     if verbose:
-        #         logging.debug(f"{y} -- {x} and {y} -- {z}")
 
         if priority == 0:  # 0: overwrite
             edge1 = cg_new.G.get_edge(cg_new.G.nodes[x], cg_new.G.nodes[y])
