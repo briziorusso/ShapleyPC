@@ -1,5 +1,5 @@
 # Shapley-PC
-This repository provides the code for the paper "Shapley-PC: Constraint-based Causal Structure Learning with Shapley Values". 
+This repository provides the code for the paper "Shapley-PC: Constraint-based Causal Structure Learning with Shapley Values". Shapley-PC is a constraint-based causal discovery algorithm, to faithfully recover the underlying causal graph from observational data.
 
 There are four main python scripts:
 - `PC.py` contains the `pc()` function that overrides the one from the causal-learn package to allow for our proposed decision rule. Example usage of this function is given below.
@@ -51,3 +51,24 @@ The datasets used for the synthetic data are created within the `main.py` functi
 The code was tested with Python 3.10.12. `requirements.txt` provides the necessary python packages. Run `pip install -r requirements.txt` from a terminal at the root folder to install all packages in your virtual environment. 
 
 Note that the R dependencies for `CausalDiscoveyToolbox` need separate installation. `install_script.R` installs the necessary R packages but this needs to be ran from R while in the root folder. R-4.1.2 was used for the testing. 
+
+
+### Reference
+If you are using this code, please cite our paper
+```
+@InProceedings{pmlr-v275-russo25a,
+  title = 	 {Shapley-PC: Constraint-based Causal Structure Learning with a Shapley Inspired Framework},
+  author =       {Russo, Fabrizio and Toni, Francesca},
+  booktitle = 	 {Proceedings of the Fourth Conference on Causal Learning and Reasoning},
+  pages = 	 {292--339},
+  year = 	 {2025},
+  editor = 	 {Huang, Biwei and Drton, Mathias},
+  volume = 	 {275},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {07--09 May},
+  publisher =    {PMLR},
+  pdf = 	 {https://raw.githubusercontent.com/mlresearch/v275/main/assets/russo25a/russo25a.pdf},
+  url = 	 {https://proceedings.mlr.press/v275/russo25a.html}
+}
+
+```
